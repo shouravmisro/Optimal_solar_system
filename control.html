@@ -14,7 +14,7 @@
   <button id="pumpBtn">Run Pump</button>
   <div id="status"></div>
   <script>
-    const WRITE_API_KEY = "YOUR_CONTROL_CHANNEL_WRITE_KEY";
+    const WRITE_API_KEY = "YMC5F0AWE6SKDEVQ5";
     const CHANNEL_URL = "https://api.thingspeak.com/update";
     document.getElementById('motorBtn').onclick = function() {
       fetch(`${CHANNEL_URL}?api_key=${WRITE_API_KEY}&field1=1`, { method: "GET" })
