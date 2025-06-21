@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Sensor Data Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0;}
+    header { background: #173263; color: #fff; padding: 1em 0; text-align: center; }
+    h1 { margin: 0 0 0.2em 0; font-size: 2em; }
+    .nav { text-align: center; margin-top: 1em; margin-bottom: 2em; }
+    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; }
+    .nav a:hover { background: #173263; }
+    section { max-width: 99vw; margin: auto; padding: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2em; background: #fff; box-shadow: 0 2px 8px #0001;}
+    th, td { border: 1px solid #eee; padding: 0.43em 0.7em; font-size: 0.99em;}
+    th { background: #173263; color: #fff; }
+    tr:nth-child(even) { background: #f2f7fa;}
+    .subtitle { font-weight: bold; color: #173263; margin: 1.2em 0 0.5em 0;}
+    @media (max-width: 900px) { table { font-size: 0.85em; } }
+    @media (max-width: 650px) { th, td { font-size: 0.78em; padding: 0.25em 0.3em;} }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ESP32 Sensor Raw Data Table</h1>
+    <div class="nav">
+      <a href="index.html">Live Dashboard</a>
+      <a href="history.html">Historical Charts</a>
+      <a href="table.html">Raw Data Table</a>
+    </div>
+  </header>
+  <section>
+    <div class="subtitle">Main Channel (BME280, INA219, Light): Last 50 Entries</div>
+    <div id="main-table">Loading...</div>
+    <div class="subtitle">Extra Channel (DHT11, LDR, Rain, Dust): Last 50 Entries</div>
+    <div id="extra-table">Loading...</div>
+  </section>
+  <script>
+    const MAIN_CHANNEL_ID = "2995079";
+    const MAIN_READ_API = "KK28II1TGG2KSWDO";
+    const EXTRA_CHANNEL_ID = "2995090";
+    const EXTRA_READ_API = "OYP628CRYJNOS0LC";
+    const LIMIT = 50;
+
+    // Table for main channel (fields 1–7)
+    function buildMainTable(feeds) {
+      let html = `<table><thead>
+        <tr>
+          <th>Time</th>
+          <th>Temp (°C)</th><th>Hum (%)</th><th>Press (hPa)</th><th>Alt (m)</th>
+          <th>Bus V (V)</th><th>Current (mA)</th><th>Light (lx)</th>
+        </tr></thead><tbody>`;
+      for(let f of feeds) {
+        html += `<tr>
+          <td>${new Date(f.created_at).toLocaleString()}</td>
+          <td>${f.field1||""}</td><td>${f.field2||""}</td><td>${f.field3||""}</td><td>${f.field4||""}</td>
+          <td>${f.field5||""}</td><td>${f.field6||""}</td><td>${f.field7||""}</td>
+        </tr>`;
+      }
+      html += `</tbody></table>`;
+      return html;
+    }
+    // Table for extra channel (fields 1–6)
+    function buildExtraTable(feeds) {
+      let html = `<table><thead>
+        <tr>
+          <th>Time</th>
+          <th>DHT Temp (°C)</th><th>DHT Hum (%)</th><th>LDR</th>
+          <th>Rain (Analog)</th><th>Rain (Digital)</th><th>Dust (ug/m³)</th>
+        </tr></thead><tbody>`;
+      for(let f of feeds) {
+        html += `<tr>
+          <td>${new Date(f.created_at).toLocaleString()}</td>
+          <td>${f.field1||""}</td><td>${f.field2||""}</td><td>${f.field3||""}</td>
+          <td>${f.field4||""}</td><td>${f.field5||""}</td><td>${f.field6||""}</td>
+        </tr>`;
+      }
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    function fetchThingSpeak(channel, api, cb) {
+      fetch(`https://api.thingspeak.com/channels/${channel}/feeds.json?api_key=${api}&results=${LIMIT}`)
+        .then(resp => resp.json()).then(json => cb(json.feeds));
+    }
+    fetchThingSpeak(MAIN_CHANNEL_ID, MAIN_READ_API, feeds => {
+      document.getElementById('main-table').innerHTML = buildMainTable(feeds);
+    });
+    fetchThingSpeak(EXTRA_CHANNEL_ID, EXTRA_READ_API, feeds => {
+      document.getElementById('extra-table').innerHTML = buildExtraTable(feeds);
+    });
+  </script>
+</body>
+</html>
