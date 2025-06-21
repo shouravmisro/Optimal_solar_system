@@ -2,70 +2,125 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ESP32 Sensor History</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Sensor Dashboard – History</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0;}
-    header { background: #173263; color: #fff; padding: 1em 0; text-align: center; }
-    h1 { margin: 0 0 0.2em 0; font-size: 2em; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0; }
+    header { background: #173263; color: #fff; padding: 1.2em 0; text-align: center; box-shadow: 0 2px 8px #0001; }
     .nav { text-align: center; margin-top: 1em; margin-bottom: 2em; }
-    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; }
+    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; transition: background 0.18s; }
     .nav a:hover { background: #173263; }
-    section { max-width: 900px; margin: auto; padding: 1.2em; background: #fff; border-radius: 10px; box-shadow: 0 2px 16px #0002; }
-    .chart-title { font-weight: bold; margin: 2em 0 0.5em 0; color: #173263;}
-    iframe { border: 1px solid #ccc; border-radius: 8px; width: 100%; min-height: 350px; margin-bottom: 1.5em; }
+    .chart-block { max-width: 740px; margin: 1.5em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1em 2em; }
+    h2 { color: #3460b4; }
+    @media (max-width: 780px) {
+      .chart-block { padding: 1em 0.3em; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>ESP32 Sensor Historical Charts</h1>
-    <div class="nav">
-      <a href="index.html">Live Dashboard</a>
-      <a href="history.html">Historical Charts</a>
-      <a href="table.html">Raw Data Table</a>
-    </div>
+    <h1><i class="fa-solid fa-chart-line"></i> ESP32 Sensor History</h1>
   </header>
-  <section>
-    <!-- Main Channel Historical Charts -->
-    <div class="chart-title">Temperature (BME280)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/1?bgcolor=%23ffffff&color=%233460b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Humidity (BME280)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/2?bgcolor=%23ffffff&color=%232bbbad&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Pressure (BME280)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/3?bgcolor=%23ffffff&color=%23b43c34&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Altitude (BME280)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/4?bgcolor=%23ffffff&color=%239c34b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Bus Voltage (INA219)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/5?bgcolor=%23ffffff&color=%23ffb800&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Current (INA219)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/6?bgcolor=%23ffffff&color=%2334b42e&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Light Intensity (BH1750)</div>
-    <iframe src="https://thingspeak.com/channels/2995079/charts/7?bgcolor=%23ffffff&color=%234679b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <!-- Extra Channel Charts -->
-    <div class="chart-title">DHT11 Temperature</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/1?bgcolor=%23ffffff&color=%23b46034&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">DHT11 Humidity</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/2?bgcolor=%23ffffff&color=%2344aaff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">LDR Raw</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/3?bgcolor=%23ffffff&color=%2344aa66&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Rain (Analog)</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/4?bgcolor=%23ffffff&color=%23b400ff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Rain (Digital)</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/5?bgcolor=%23ffffff&color=%2300b4ff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-    
-    <div class="chart-title">Dust Density (ug/m³)</div>
-    <iframe src="https://thingspeak.com/channels/2995090/charts/6?bgcolor=%23ffffff&color=%23aa2233&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
-  </section>
+  <div class="nav">
+    <a href="index.html">Live Dashboard</a>
+    <a href="history.html">Historical Charts</a>
+    <a href="table.html">Raw Data Table</a>
+  </div>
+
+  <div class="chart-block">
+    <h2><i class="fa-solid fa-database"></i> Environmental, INA, Light</h2>
+    <canvas id="mainChart" height="150"></canvas>
+  </div>
+  <div class="chart-block">
+    <h2><i class="fa-solid fa-bars-progress"></i> DHT11, LDR, Rain, Dust</h2>
+    <canvas id="extraChart" height="150"></canvas>
+  </div>
+
+  <script>
+    // ThingSpeak Main Channel
+    const MAIN_CHANNEL_ID = "2995079";
+    const MAIN_READ_API = "KK28II1TGG2KSWDO";
+    // ThingSpeak Extra Channel
+    const EXTRA_CHANNEL_ID = "2995090";
+    const EXTRA_READ_API = "OYP628CRYJNOS0LC";
+    // Chart settings
+    const NUM_POINTS = 40; // How many history points to fetch
+
+    function fetchThingSpeakJSON(channel, api, num=40) {
+      return fetch(`https://api.thingspeak.com/channels/${channel}/feeds.json?api_key=${api}&results=${num}`)
+        .then(resp => resp.json());
+    }
+
+    function parseMainHistory(data) {
+      // Field map: 1:Temp, 2:Hum, 3:Press, 4:Alt, 5:BusV, 6:Current, 7:Lux
+      const feeds = data.feeds || [];
+      const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString());
+      const series = [
+        { label: "Temp (°C)",     data: feeds.map(f => parseFloat(f.field1)), borderColor: "#F24D0A", fill: false },
+        { label: "Humidity (%)",  data: feeds.map(f => parseFloat(f.field2)), borderColor: "#2095F2", fill: false },
+        { label: "Pressure (hPa)",data: feeds.map(f => parseFloat(f.field3)), borderColor: "#4CAF50", fill: false },
+        { label: "Altitude (m)",  data: feeds.map(f => parseFloat(f.field4)), borderColor: "#BC13FE", fill: false },
+        { label: "Bus V (V)",     data: feeds.map(f => parseFloat(f.field5)), borderColor: "#FEA613", fill: false },
+        { label: "Current (mA)",  data: feeds.map(f => parseFloat(f.field6)), borderColor: "#E91E63", fill: false },
+        { label: "Light (lx)",    data: feeds.map(f => parseFloat(f.field7)), borderColor: "#9C27B0", fill: false }
+      ];
+      return { labels, series };
+    }
+
+    function parseExtraHistory(data) {
+      // Field map: 1:DHT Temp, 2:DHT Hum, 3:LDR, 4:RainA, 5:RainD, 6:Dust
+      const feeds = data.feeds || [];
+      const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString());
+      const series = [
+        { label: "DHT Temp (°C)", data: feeds.map(f => parseFloat(f.field1)), borderColor: "#F24D0A", fill: false },
+        { label: "DHT Hum (%)",   data: feeds.map(f => parseFloat(f.field2)), borderColor: "#2095F2", fill: false },
+        { label: "LDR",           data: feeds.map(f => parseFloat(f.field3)), borderColor: "#4CAF50", fill: false },
+        { label: "Rain Analog",   data: feeds.map(f => parseFloat(f.field4)), borderColor: "#FEA613", fill: false },
+        { label: "Rain Digital",  data: feeds.map(f => parseFloat(f.field5)), borderColor: "#7C4DFF", fill: false },
+        { label: "Dust (ug/m³)",  data: feeds.map(f => parseFloat(f.field6)), borderColor: "#E91E63", fill: false }
+      ];
+      return { labels, series };
+    }
+
+    // Render Chart.js line chart
+    function renderLineChart(ctx, labels, series) {
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: series
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: {
+            x: { display: true, title: { display: false } },
+            y: { display: true, title: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Load and render both charts
+    async function loadCharts() {
+      // Main chart
+      const main = await fetchThingSpeakJSON(MAIN_CHANNEL_ID, MAIN_READ_API, NUM_POINTS);
+      const mainParsed = parseMainHistory(main);
+      renderLineChart(document.getElementById('mainChart').getContext('2d'), mainParsed.labels, mainParsed.series);
+
+      // Extra chart
+      const extra = await fetchThingSpeakJSON(EXTRA_CHANNEL_ID, EXTRA_READ_API, NUM_POINTS);
+      const extraParsed = parseExtraHistory(extra);
+      renderLineChart(document.getElementById('extraChart').getContext('2d'), extraParsed.labels, extraParsed.series);
+    }
+
+    loadCharts();
+  </script>
 </body>
 </html>
