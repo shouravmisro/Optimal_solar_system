@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ESP32 Sensor Dashboard</title>
+  <title>ESP32 Sensor History</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0; }
     header { background: #173263; color: #fff; padding: 1.2em 0 0.9em 0; text-align: center; box-shadow: 0 2px 8px #0001; }
@@ -24,25 +25,17 @@
       display: inline-block;
     }
     .nav a:hover { background: #173263; }
-    .dashboard { max-width: 530px; margin: 2em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1.5em 2em; }
-    .row { display: flex; justify-content: space-between; padding: 0.7em 0.2em; border-bottom: 1px solid #f0f0f0; }
-    .row:last-child { border-bottom: none; }
-    .label { color: #173263; font-weight: 500; }
-    .value { font-weight: 600; font-variant-numeric: tabular-nums; }
-    .sensor-group { margin-bottom: 1.7em; }
-    .group-title { color: #3460b4; font-weight: bold; margin-bottom: 0.3em; font-size: 1.14em; }
-    .icon { margin-right: 0.5em; }
-    .muted { color: #999; font-size: 0.96em; }
-    @media (max-width: 650px) {
-      .dashboard { margin: 1em 0.4em; padding: 1.3em 0.6em; }
-      .nav a { margin: 0 0.3em; padding: 0.45em 0.5em; }
-    }
+    .chart-section { max-width: 820px; margin: 1.5em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1.5em 2em; }
+    .chart-block { margin-bottom: 2.2em; }
+    .chart-title { font-weight: 600; color: #173263; margin-bottom: 0.4em; font-size: 1.14em; }
+    canvas { max-width: 100%; }
+    @media (max-width: 950px) { .chart-section { padding: 1.2em 0.4em; } }
+    @media (max-width: 600px) { .nav a { margin: 0 0.3em; padding: 0.45em 0.5em; } }
   </style>
 </head>
 <body>
   <header>
-    <h1><i class="fa-solid fa-microchip"></i> ESP32 Sensor Dashboard</h1>
-    <div class="muted">Last update: <span id="updated">-</span></div>
+    <h1><i class="fa-solid fa-chart-line"></i> ESP32 Sensor History</h1>
     <div class="nav">
       <a href="index.html"><i class="fa-solid fa-gauge"></i> Live Dashboard</a>
       <a href="history.html"><i class="fa-solid fa-chart-line"></i> Historical Charts</a>
@@ -50,76 +43,165 @@
     </div>
   </header>
   <main>
-    <section class="dashboard">
-      <div class="sensor-group">
-        <div class="group-title"><i class="fa-solid fa-temperature-three-quarters icon"></i>Environmental (BME280)</div>
-        <div class="row"><div class="label">Temperature</div><div class="value" id="bmeTemp">-</div></div>
-        <div class="row"><div class="label">Humidity</div><div class="value" id="bmeHum">-</div></div>
-        <div class="row"><div class="label">Pressure</div><div class="value" id="bmePress">-</div></div>
-        <div class="row"><div class="label">Altitude</div><div class="value" id="bmeAlt">-</div></div>
+    <section class="chart-section">
+      <div class="chart-block">
+        <div class="chart-title">Temperature (&deg;C) [BME280 vs DHT11]</div>
+        <canvas id="tempChart"></canvas>
       </div>
-      <div class="sensor-group">
-        <div class="group-title"><i class="fa-solid fa-bolt icon"></i>INA219 Power</div>
-        <div class="row"><div class="label">Bus Voltage</div><div class="value" id="inaBusV">-</div></div>
-        <div class="row"><div class="label">Current</div><div class="value" id="inaCurrent">-</div></div>
+      <div class="chart-block">
+        <div class="chart-title">Humidity (%) [BME280 vs DHT11]</div>
+        <canvas id="humChart"></canvas>
       </div>
-      <div class="sensor-group">
-        <div class="group-title"><i class="fa-solid fa-lightbulb icon"></i>BH1750 Light</div>
-        <div class="row"><div class="label">Illuminance</div><div class="value" id="lux">-</div></div>
+      <div class="chart-block">
+        <div class="chart-title">Pressure (hPa)</div>
+        <canvas id="pressChart"></canvas>
       </div>
-      <div class="sensor-group">
-        <div class="group-title"><i class="fa-solid fa-droplet icon"></i>DHT11, LDR, Rain, Dust</div>
-        <div class="row"><div class="label">DHT Temperature</div><div class="value" id="dhtTemp">-</div></div>
-        <div class="row"><div class="label">DHT Humidity</div><div class="value" id="dhtHum">-</div></div>
-        <div class="row"><div class="label">LDR</div><div class="value" id="ldrRaw">-</div></div>
-        <div class="row"><div class="label">Rain (A/D)</div><div class="value" id="rain">-</div></div>
-        <div class="row"><div class="label">Dust Density</div><div class="value" id="dustDensity">-</div></div>
+      <div class="chart-block">
+        <div class="chart-title">Altitude (m)</div>
+        <canvas id="altChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Bus Voltage (V) [INA219]</div>
+        <canvas id="busVChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Current (mA) [INA219]</div>
+        <canvas id="curChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Illuminance (lx) [BH1750]</div>
+        <canvas id="luxChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">LDR (Raw ADC)</div>
+        <canvas id="ldrChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Rain Sensor (Analog)</div>
+        <canvas id="rainAChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Rain Sensor (Digital)</div>
+        <canvas id="rainDChart"></canvas>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">Dust Density (ug/m³)</div>
+        <canvas id="dustChart"></canvas>
       </div>
     </section>
   </main>
   <script>
-    // ThingSpeak: main & extra
+    // --- ThingSpeak channels & API KEYS ---
     const MAIN_CHANNEL_ID = "2995079";
     const MAIN_READ_API = "KK28II1TGG2KSWDO";
     const EXTRA_CHANNEL_ID = "2995090";
     const EXTRA_READ_API = "OYP628CRYJNOS0LC";
-    function fetchThingSpeakJSON(channel, api, num=1) {
+    // --- How many points to show ---
+    const N = 40; // last 40 entries (~10 minutes if update every 15s)
+    // --- Fetch JSON from ThingSpeak ---
+    function fetchThingSpeakJSON(channel, api, num) {
       return fetch(`https://api.thingspeak.com/channels/${channel}/feeds.json?api_key=${api}&results=${num}`)
         .then(resp => resp.json());
     }
-    async function updateDashboard() {
-      // 1. Fetch main (BME/INA/Light)
-      const main = await fetchThingSpeakJSON(MAIN_CHANNEL_ID, MAIN_READ_API, 1);
-      const extra = await fetchThingSpeakJSON(EXTRA_CHANNEL_ID, EXTRA_READ_API, 1);
-      // BME280
-      const feed = main.feeds && main.feeds[0] || {};
-      document.getElementById('bmeTemp').textContent = feed.field1 ? `${feed.field1} °C` : '-';
-      document.getElementById('bmeHum').textContent  = feed.field2 ? `${feed.field2} %` : '-';
-      document.getElementById('bmePress').textContent= feed.field3 ? `${feed.field3} hPa` : '-';
-      document.getElementById('bmeAlt').textContent  = feed.field4 ? `${feed.field4} m` : '-';
-      // INA219
-      document.getElementById('inaBusV').textContent = feed.field5 ? `${feed.field5} V` : '-';
-      document.getElementById('inaCurrent').textContent = feed.field6 ? `${feed.field6} mA` : '-';
-      // Light
-      document.getElementById('lux').textContent     = feed.field7 ? `${feed.field7} lx` : '-';
-      // DHT/Extras
-      const ext = extra.feeds && extra.feeds[0] || {};
-      document.getElementById('dhtTemp').textContent = ext.field1 ? `${ext.field1} °C` : '-';
-      document.getElementById('dhtHum').textContent  = ext.field2 ? `${ext.field2} %` : '-';
-      document.getElementById('ldrRaw').textContent  = ext.field3 || '-';
-      document.getElementById('rain').textContent    = (ext.field4 && ext.field5) ? `${ext.field4}/${ext.field5}` : '-';
-      document.getElementById('dustDensity').textContent = ext.field6 ? `${ext.field6} ug/m³` : '-';
-      // Timestamp
-      let date = feed.created_at || ext.created_at;
-      if(date) {
-        const dt = new Date(date);
-        document.getElementById('updated').textContent = dt.toLocaleString();
-      } else {
-        document.getElementById('updated').textContent = '-';
-      }
+    function parseFloatOrNull(v) {
+      let f = parseFloat(v);
+      return isNaN(f) ? null : f;
     }
-    updateDashboard();
-    setInterval(updateDashboard, 4000);
+    async function loadHistory() {
+      // Fetch both feeds in parallel
+      const [main, extra] = await Promise.all([
+        fetchThingSpeakJSON(MAIN_CHANNEL_ID, MAIN_READ_API, N),
+        fetchThingSpeakJSON(EXTRA_CHANNEL_ID, EXTRA_READ_API, N)
+      ]);
+      // Main fields: 1-7, extra fields: 1-6
+      let mainFeeds = (main.feeds||[]).map(f => ({
+        t: f.created_at,
+        temp: parseFloatOrNull(f.field1),
+        hum:  parseFloatOrNull(f.field2),
+        press:parseFloatOrNull(f.field3),
+        alt:  parseFloatOrNull(f.field4),
+        busV: parseFloatOrNull(f.field5),
+        current: parseFloatOrNull(f.field6),
+        lux:  parseFloatOrNull(f.field7)
+      }));
+      let extraFeeds = (extra.feeds||[]).map(f => ({
+        t: f.created_at,
+        dhtTemp: parseFloatOrNull(f.field1),
+        dhtHum: parseFloatOrNull(f.field2),
+        ldr:    parseFloatOrNull(f.field3),
+        rainA:  parseFloatOrNull(f.field4),
+        rainD:  parseFloatOrNull(f.field5),
+        dust:   parseFloatOrNull(f.field6)
+      }));
+      // Use same timestamp index for both channels (if lengths differ, pad with nulls)
+      let timestamps = mainFeeds.map(f => f.t);
+      while (extraFeeds.length < mainFeeds.length) extraFeeds.unshift({});
+      while (mainFeeds.length < extraFeeds.length) mainFeeds.unshift({});
+      // --- Chart.js setup ---
+      function lineChart(canvas, labels, datasets, options={}) {
+        return new Chart(canvas, {
+          type: 'line',
+          data: { labels, datasets },
+          options: Object.assign({
+            responsive:true,
+            plugins: { legend: { display: true } },
+            scales: {
+              x: { display: true, ticks: { maxTicksLimit: 8 }},
+              y: { display: true, beginAtZero: false }
+            }
+          }, options)
+        });
+      }
+      // --- Prepare Data for Each Chart ---
+      const labels = timestamps.map(t => (t ? new Date(t).toLocaleTimeString() : ''));
+      // Temperature: BME280 & DHT11
+      lineChart(document.getElementById('tempChart'), labels, [
+        {label:'BME280',data:mainFeeds.map(f=>f.temp),borderColor:'#0077cc',backgroundColor:'#0077cc22',fill:false},
+        {label:'DHT11', data:extraFeeds.map(f=>f.dhtTemp),borderColor:'#e65100',backgroundColor:'#e6510022',fill:false}
+      ]);
+      // Humidity: BME280 & DHT11
+      lineChart(document.getElementById('humChart'), labels, [
+        {label:'BME280',data:mainFeeds.map(f=>f.hum),borderColor:'#0077cc',backgroundColor:'#0077cc22',fill:false},
+        {label:'DHT11', data:extraFeeds.map(f=>f.dhtHum),borderColor:'#008080',backgroundColor:'#00808022',fill:false}
+      ]);
+      // Pressure
+      lineChart(document.getElementById('pressChart'), labels, [
+        {label:'Pressure',data:mainFeeds.map(f=>f.press),borderColor:'#6c3483',backgroundColor:'#6c348322',fill:false}
+      ]);
+      // Altitude
+      lineChart(document.getElementById('altChart'), labels, [
+        {label:'Altitude',data:mainFeeds.map(f=>f.alt),borderColor:'#2980b9',backgroundColor:'#2980b922',fill:false}
+      ]);
+      // INA219 Bus Voltage
+      lineChart(document.getElementById('busVChart'), labels, [
+        {label:'Bus Voltage',data:mainFeeds.map(f=>f.busV),borderColor:'#b9770e',backgroundColor:'#b9770e22',fill:false}
+      ]);
+      // INA219 Current
+      lineChart(document.getElementById('curChart'), labels, [
+        {label:'Current',data:mainFeeds.map(f=>f.current),borderColor:'#16a085',backgroundColor:'#16a08522',fill:false}
+      ]);
+      // Light (BH1750)
+      lineChart(document.getElementById('luxChart'), labels, [
+        {label:'Illuminance',data:mainFeeds.map(f=>f.lux),borderColor:'#f1c40f',backgroundColor:'#f1c40f22',fill:false}
+      ]);
+      // LDR
+      lineChart(document.getElementById('ldrChart'), labels, [
+        {label:'LDR',data:extraFeeds.map(f=>f.ldr),borderColor:'#b22222',backgroundColor:'#b2222222',fill:false}
+      ]);
+      // Rain Analog
+      lineChart(document.getElementById('rainAChart'), labels, [
+        {label:'Rain Analog',data:extraFeeds.map(f=>f.rainA),borderColor:'#007700',backgroundColor:'#00770022',fill:false}
+      ]);
+      // Rain Digital
+      lineChart(document.getElementById('rainDChart'), labels, [
+        {label:'Rain Digital',data:extraFeeds.map(f=>f.rainD),borderColor:'#aa00bb',backgroundColor:'#aa00bb22',fill:true, stepped: true}
+      ]);
+      // Dust
+      lineChart(document.getElementById('dustChart'), labels, [
+        {label:'Dust Density',data:extraFeeds.map(f=>f.dust),borderColor:'#424242',backgroundColor:'#42424222',fill:false}
+      ]);
+    }
+    loadHistory();
   </script>
 </body>
 </html>
