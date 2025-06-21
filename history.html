@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Sensor History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0;}
+    header { background: #173263; color: #fff; padding: 1em 0; text-align: center; }
+    h1 { margin: 0 0 0.2em 0; font-size: 2em; }
+    .nav { text-align: center; margin-top: 1em; margin-bottom: 2em; }
+    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; }
+    .nav a:hover { background: #173263; }
+    section { max-width: 900px; margin: auto; padding: 1.2em; background: #fff; border-radius: 10px; box-shadow: 0 2px 16px #0002; }
+    .chart-title { font-weight: bold; margin: 2em 0 0.5em 0; color: #173263;}
+    iframe { border: 1px solid #ccc; border-radius: 8px; width: 100%; min-height: 350px; margin-bottom: 1.5em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ESP32 Sensor Historical Charts</h1>
+    <div class="nav">
+      <a href="index.html">Live Dashboard</a>
+      <a href="history.html">Historical Charts</a>
+      <a href="table.html">Raw Data Table</a>
+    </div>
+  </header>
+  <section>
+    <!-- Main Channel Historical Charts -->
+    <div class="chart-title">Temperature (BME280)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/1?bgcolor=%23ffffff&color=%233460b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Humidity (BME280)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/2?bgcolor=%23ffffff&color=%232bbbad&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Pressure (BME280)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/3?bgcolor=%23ffffff&color=%23b43c34&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Altitude (BME280)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/4?bgcolor=%23ffffff&color=%239c34b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Bus Voltage (INA219)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/5?bgcolor=%23ffffff&color=%23ffb800&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Current (INA219)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/6?bgcolor=%23ffffff&color=%2334b42e&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Light Intensity (BH1750)</div>
+    <iframe src="https://thingspeak.com/channels/2995079/charts/7?bgcolor=%23ffffff&color=%234679b4&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <!-- Extra Channel Charts -->
+    <div class="chart-title">DHT11 Temperature</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/1?bgcolor=%23ffffff&color=%23b46034&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">DHT11 Humidity</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/2?bgcolor=%23ffffff&color=%2344aaff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">LDR Raw</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/3?bgcolor=%23ffffff&color=%2344aa66&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Rain (Analog)</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/4?bgcolor=%23ffffff&color=%23b400ff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Rain (Digital)</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/5?bgcolor=%23ffffff&color=%2300b4ff&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+    
+    <div class="chart-title">Dust Density (ug/m³)</div>
+    <iframe src="https://thingspeak.com/channels/2995090/charts/6?bgcolor=%23ffffff&color=%23aa2233&dynamic=true&results=1000&type=line" allowfullscreen></iframe>
+  </section>
+</body>
+</html>
