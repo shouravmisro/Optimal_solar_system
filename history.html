@@ -2,125 +2,124 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ESP32 Sensor Dashboard – History</title>
+  <title>ESP32 Sensor Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0; }
-    header { background: #173263; color: #fff; padding: 1.2em 0; text-align: center; box-shadow: 0 2px 8px #0001; }
-    .nav { text-align: center; margin-top: 1em; margin-bottom: 2em; }
-    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; transition: background 0.18s; }
+    header { background: #173263; color: #fff; padding: 1.2em 0 0.9em 0; text-align: center; box-shadow: 0 2px 8px #0001; }
+    h1 { margin: 0 0 0.2em 0; font-size: 2.2em; }
+    .nav { text-align: center; margin-top: 1.1em; }
+    .nav a {
+      text-decoration: none;
+      background: #3460b4;
+      color: #fff;
+      padding: 0.5em 1.1em;
+      border-radius: 5px;
+      margin: 0 0.6em;
+      font-weight: 500;
+      box-shadow: 0 2px 8px #0001;
+      transition: background 0.18s;
+      letter-spacing: .02em;
+      display: inline-block;
+    }
     .nav a:hover { background: #173263; }
-    .chart-block { max-width: 740px; margin: 1.5em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1em 2em; }
-    h2 { color: #3460b4; }
-    @media (max-width: 780px) {
-      .chart-block { padding: 1em 0.3em; }
+    .dashboard { max-width: 530px; margin: 2em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1.5em 2em; }
+    .row { display: flex; justify-content: space-between; padding: 0.7em 0.2em; border-bottom: 1px solid #f0f0f0; }
+    .row:last-child { border-bottom: none; }
+    .label { color: #173263; font-weight: 500; }
+    .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .sensor-group { margin-bottom: 1.7em; }
+    .group-title { color: #3460b4; font-weight: bold; margin-bottom: 0.3em; font-size: 1.14em; }
+    .icon { margin-right: 0.5em; }
+    .muted { color: #999; font-size: 0.96em; }
+    @media (max-width: 650px) {
+      .dashboard { margin: 1em 0.4em; padding: 1.3em 0.6em; }
+      .nav a { margin: 0 0.3em; padding: 0.45em 0.5em; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1><i class="fa-solid fa-chart-line"></i> ESP32 Sensor History</h1>
+    <h1><i class="fa-solid fa-microchip"></i> ESP32 Sensor Dashboard</h1>
+    <div class="muted">Last update: <span id="updated">-</span></div>
+    <div class="nav">
+      <a href="index.html"><i class="fa-solid fa-gauge"></i> Live Dashboard</a>
+      <a href="history.html"><i class="fa-solid fa-chart-line"></i> Historical Charts</a>
+      <a href="table.html"><i class="fa-solid fa-table"></i> Raw Data Table</a>
+    </div>
   </header>
-  <div class="nav">
-    <a href="index.html">Live Dashboard</a>
-    <a href="history.html">Historical Charts</a>
-    <a href="table.html">Raw Data Table</a>
-  </div>
-
-  <div class="chart-block">
-    <h2><i class="fa-solid fa-database"></i> Environmental, INA, Light</h2>
-    <canvas id="mainChart" height="150"></canvas>
-  </div>
-  <div class="chart-block">
-    <h2><i class="fa-solid fa-bars-progress"></i> DHT11, LDR, Rain, Dust</h2>
-    <canvas id="extraChart" height="150"></canvas>
-  </div>
-
+  <main>
+    <section class="dashboard">
+      <div class="sensor-group">
+        <div class="group-title"><i class="fa-solid fa-temperature-three-quarters icon"></i>Environmental (BME280)</div>
+        <div class="row"><div class="label">Temperature</div><div class="value" id="bmeTemp">-</div></div>
+        <div class="row"><div class="label">Humidity</div><div class="value" id="bmeHum">-</div></div>
+        <div class="row"><div class="label">Pressure</div><div class="value" id="bmePress">-</div></div>
+        <div class="row"><div class="label">Altitude</div><div class="value" id="bmeAlt">-</div></div>
+      </div>
+      <div class="sensor-group">
+        <div class="group-title"><i class="fa-solid fa-bolt icon"></i>INA219 Power</div>
+        <div class="row"><div class="label">Bus Voltage</div><div class="value" id="inaBusV">-</div></div>
+        <div class="row"><div class="label">Current</div><div class="value" id="inaCurrent">-</div></div>
+      </div>
+      <div class="sensor-group">
+        <div class="group-title"><i class="fa-solid fa-lightbulb icon"></i>BH1750 Light</div>
+        <div class="row"><div class="label">Illuminance</div><div class="value" id="lux">-</div></div>
+      </div>
+      <div class="sensor-group">
+        <div class="group-title"><i class="fa-solid fa-droplet icon"></i>DHT11, LDR, Rain, Dust</div>
+        <div class="row"><div class="label">DHT Temperature</div><div class="value" id="dhtTemp">-</div></div>
+        <div class="row"><div class="label">DHT Humidity</div><div class="value" id="dhtHum">-</div></div>
+        <div class="row"><div class="label">LDR</div><div class="value" id="ldrRaw">-</div></div>
+        <div class="row"><div class="label">Rain (A/D)</div><div class="value" id="rain">-</div></div>
+        <div class="row"><div class="label">Dust Density</div><div class="value" id="dustDensity">-</div></div>
+      </div>
+    </section>
+  </main>
   <script>
-    // ThingSpeak Main Channel
+    // ThingSpeak: main & extra
     const MAIN_CHANNEL_ID = "2995079";
     const MAIN_READ_API = "KK28II1TGG2KSWDO";
-    // ThingSpeak Extra Channel
     const EXTRA_CHANNEL_ID = "2995090";
     const EXTRA_READ_API = "OYP628CRYJNOS0LC";
-    // Chart settings
-    const NUM_POINTS = 40; // How many history points to fetch
-
-    function fetchThingSpeakJSON(channel, api, num=40) {
+    function fetchThingSpeakJSON(channel, api, num=1) {
       return fetch(`https://api.thingspeak.com/channels/${channel}/feeds.json?api_key=${api}&results=${num}`)
         .then(resp => resp.json());
     }
-
-    function parseMainHistory(data) {
-      // Field map: 1:Temp, 2:Hum, 3:Press, 4:Alt, 5:BusV, 6:Current, 7:Lux
-      const feeds = data.feeds || [];
-      const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString());
-      const series = [
-        { label: "Temp (°C)",     data: feeds.map(f => parseFloat(f.field1)), borderColor: "#F24D0A", fill: false },
-        { label: "Humidity (%)",  data: feeds.map(f => parseFloat(f.field2)), borderColor: "#2095F2", fill: false },
-        { label: "Pressure (hPa)",data: feeds.map(f => parseFloat(f.field3)), borderColor: "#4CAF50", fill: false },
-        { label: "Altitude (m)",  data: feeds.map(f => parseFloat(f.field4)), borderColor: "#BC13FE", fill: false },
-        { label: "Bus V (V)",     data: feeds.map(f => parseFloat(f.field5)), borderColor: "#FEA613", fill: false },
-        { label: "Current (mA)",  data: feeds.map(f => parseFloat(f.field6)), borderColor: "#E91E63", fill: false },
-        { label: "Light (lx)",    data: feeds.map(f => parseFloat(f.field7)), borderColor: "#9C27B0", fill: false }
-      ];
-      return { labels, series };
+    async function updateDashboard() {
+      // 1. Fetch main (BME/INA/Light)
+      const main = await fetchThingSpeakJSON(MAIN_CHANNEL_ID, MAIN_READ_API, 1);
+      const extra = await fetchThingSpeakJSON(EXTRA_CHANNEL_ID, EXTRA_READ_API, 1);
+      // BME280
+      const feed = main.feeds && main.feeds[0] || {};
+      document.getElementById('bmeTemp').textContent = feed.field1 ? `${feed.field1} °C` : '-';
+      document.getElementById('bmeHum').textContent  = feed.field2 ? `${feed.field2} %` : '-';
+      document.getElementById('bmePress').textContent= feed.field3 ? `${feed.field3} hPa` : '-';
+      document.getElementById('bmeAlt').textContent  = feed.field4 ? `${feed.field4} m` : '-';
+      // INA219
+      document.getElementById('inaBusV').textContent = feed.field5 ? `${feed.field5} V` : '-';
+      document.getElementById('inaCurrent').textContent = feed.field6 ? `${feed.field6} mA` : '-';
+      // Light
+      document.getElementById('lux').textContent     = feed.field7 ? `${feed.field7} lx` : '-';
+      // DHT/Extras
+      const ext = extra.feeds && extra.feeds[0] || {};
+      document.getElementById('dhtTemp').textContent = ext.field1 ? `${ext.field1} °C` : '-';
+      document.getElementById('dhtHum').textContent  = ext.field2 ? `${ext.field2} %` : '-';
+      document.getElementById('ldrRaw').textContent  = ext.field3 || '-';
+      document.getElementById('rain').textContent    = (ext.field4 && ext.field5) ? `${ext.field4}/${ext.field5}` : '-';
+      document.getElementById('dustDensity').textContent = ext.field6 ? `${ext.field6} ug/m³` : '-';
+      // Timestamp
+      let date = feed.created_at || ext.created_at;
+      if(date) {
+        const dt = new Date(date);
+        document.getElementById('updated').textContent = dt.toLocaleString();
+      } else {
+        document.getElementById('updated').textContent = '-';
+      }
     }
-
-    function parseExtraHistory(data) {
-      // Field map: 1:DHT Temp, 2:DHT Hum, 3:LDR, 4:RainA, 5:RainD, 6:Dust
-      const feeds = data.feeds || [];
-      const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString());
-      const series = [
-        { label: "DHT Temp (°C)", data: feeds.map(f => parseFloat(f.field1)), borderColor: "#F24D0A", fill: false },
-        { label: "DHT Hum (%)",   data: feeds.map(f => parseFloat(f.field2)), borderColor: "#2095F2", fill: false },
-        { label: "LDR",           data: feeds.map(f => parseFloat(f.field3)), borderColor: "#4CAF50", fill: false },
-        { label: "Rain Analog",   data: feeds.map(f => parseFloat(f.field4)), borderColor: "#FEA613", fill: false },
-        { label: "Rain Digital",  data: feeds.map(f => parseFloat(f.field5)), borderColor: "#7C4DFF", fill: false },
-        { label: "Dust (ug/m³)",  data: feeds.map(f => parseFloat(f.field6)), borderColor: "#E91E63", fill: false }
-      ];
-      return { labels, series };
-    }
-
-    // Render Chart.js line chart
-    function renderLineChart(ctx, labels, series) {
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: series
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { display: true },
-            tooltip: { mode: 'index', intersect: false }
-          },
-          scales: {
-            x: { display: true, title: { display: false } },
-            y: { display: true, title: { display: false } }
-          }
-        }
-      });
-    }
-
-    // Load and render both charts
-    async function loadCharts() {
-      // Main chart
-      const main = await fetchThingSpeakJSON(MAIN_CHANNEL_ID, MAIN_READ_API, NUM_POINTS);
-      const mainParsed = parseMainHistory(main);
-      renderLineChart(document.getElementById('mainChart').getContext('2d'), mainParsed.labels, mainParsed.series);
-
-      // Extra chart
-      const extra = await fetchThingSpeakJSON(EXTRA_CHANNEL_ID, EXTRA_READ_API, NUM_POINTS);
-      const extraParsed = parseExtraHistory(extra);
-      renderLineChart(document.getElementById('extraChart').getContext('2d'), extraParsed.labels, extraParsed.series);
-    }
-
-    loadCharts();
+    updateDashboard();
+    setInterval(updateDashboard, 4000);
   </script>
 </body>
 </html>
