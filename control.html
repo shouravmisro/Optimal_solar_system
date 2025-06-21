@@ -2,77 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ESP32 Control Page</title>
+  <title>ESP32 Motor/Pump Remote Control</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; background: #f3f6f9; color: #222; text-align:center; }
-    .btn { padding: 16px 34px; margin: 1em; font-size:1.4em; border-radius: 9px; border:none; background: #2979ff; color: #fff; cursor: pointer;}
-    .btn:active { background: #194a9e; }
-    .status { margin: 1em; color: #177317; font-weight: bold; }
-    .fail { color: #d4201f; }
+    body { font-family: Arial, sans-serif; background: #eef2fa; text-align: center; }
+    .container { margin-top: 5vw; background: #fff; display: inline-block; padding: 2em 3em; border-radius: 12px; box-shadow: 0 4px 24px #0001; }
+    button { font-size: 1.2em; padding: 0.9em 2em; margin: 1em 1em 0 1em; border: none; border-radius: 6px; background: #3479ed; color: #fff; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #194c93; }
+    .status { margin-top: 1em; font-size: 1.1em; color: #234; }
   </style>
 </head>
 <body>
-  <h1>ESP32 Motor & Pump Control</h1>
-  <button class="btn" onclick="toggleMotor()">Toggle Motor</button>
-  <button class="btn" onclick="runPump()">Pump On</button>
-  <div class="status" id="status"></div>
-
+  <div class="container">
+    <h2>ESP32 Remote Control</h2>
+    <button onclick="sendMotor()">Toggle Motor Direction</button>
+    <button onclick="sendPump()">Run Pump (5 sec)</button>
+    <div class="status" id="status"></div>
+  </div>
   <script>
-    // Local ESP32 IP (update to your ESP's actual IP address)
-    const LOCAL_ESP_IP = "192.168.0.197";
-
-    // ThingSpeak Write API Key and URLs
-    const TS_WRITE_KEY = "MC5F0AWE6SKDEVQ5";
-    const CONTROL_URL = "https://api.thingspeak.com/update?api_key=" + TS_WRITE_KEY;
-
-    // Attempt local control first, fallback to ThingSpeak
-    async function toggleMotor() {
-      document.getElementById('status').textContent = "Sending motor command...";
-      // Try local control (must be on same WiFi as ESP32)
-      try {
-        let resp = await fetch(`http://${LOCAL_ESP_IP}/motor`, {
-          method: "POST",
-          headers: {"Content-Type":"application/x-www-form-urlencoded"},
-          body: "dir=toggle"
+    const API_KEY = 'MC5F0AWE6SKDEVQ5'; // ThingSpeak Write API Key
+    function sendMotor() {
+      document.getElementById('status').textContent = "Sending motor toggle...";
+      fetch(`https://api.thingspeak.com/update?api_key=${API_KEY}&field1=1`)
+        .then(r => r.text()).then(data => {
+          document.getElementById('status').textContent = data === "0" ? "ThingSpeak: Rate limited! Try again in a few seconds." : "Motor toggle command sent!";
+        }).catch(() => {
+          document.getElementById('status').textContent = "Error sending command.";
         });
-        if (resp.ok) {
-          let txt = await resp.text();
-          document.getElementById('status').textContent = "Local: " + txt;
-          return;
-        }
-      } catch (e) { /* Local fail, try remote! */ }
-      // Remote control via ThingSpeak
-      let remoteResp = await fetch(CONTROL_URL + "&field1=1");
-      if (remoteResp.ok) {
-        document.getElementById('status').textContent = "Remote (ThingSpeak): Command sent!";
-      } else {
-        document.getElementById('status').innerHTML = "<span class='fail'>Failed to send command (remote and local).</span>";
-      }
     }
-
-    async function runPump() {
-      document.getElementById('status').textContent = "Sending pump command...";
-      // Try local control first
-      try {
-        let resp = await fetch(`http://${LOCAL_ESP_IP}/pump`, {
-          method: "POST",
-          headers: {"Content-Type":"text/plain"},
-          body: "on"
+    function sendPump() {
+      document.getElementById('status').textContent = "Sending pump trigger...";
+      fetch(`https://api.thingspeak.com/update?api_key=${API_KEY}&field2=1`)
+        .then(r => r.text()).then(data => {
+          document.getElementById('status').textContent = data === "0" ? "ThingSpeak: Rate limited! Try again in a few seconds." : "Pump command sent!";
+        }).catch(() => {
+          document.getElementById('status').textContent = "Error sending command.";
         });
-        if (resp.ok) {
-          let txt = await resp.text();
-          document.getElementById('status').textContent = "Local: " + txt;
-          return;
-        }
-      } catch (e) { /* Local fail, try remote! */ }
-      // Remote control via ThingSpeak (set field2=1)
-      let remoteResp = await fetch(CONTROL_URL + "&field2=1");
-      if (remoteResp.ok) {
-        document.getElementById('status').textContent = "Remote (ThingSpeak): Command sent!";
-      } else {
-        document.getElementById('status').innerHTML = "<span class='fail'>Failed to send command (remote and local).</span>";
-      }
     }
   </script>
 </body>
 </html>
+
