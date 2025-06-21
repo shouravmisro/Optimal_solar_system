@@ -1,0 +1,92 @@
+<!--
+ESP32 Sensor Dashboard
+Pulls data from two private ThingSpeak channels, displays readings, and links to history and raw data.
+Make sure to upload this file as index.html to your GitHub Pages repo!
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ESP32 Sensor Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin: 1.5rem; }
+    .sensor-card { margin-bottom: 1.5rem; }
+    .chart-container { height:320px; }
+    .links { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h2>ESP32 Sensor Dashboard</h2>
+
+  <div id="currentReadings"></div>
+
+  <div class="links">
+    <a href="history.html">Historical Charts</a> &nbsp;|
+    <a href="raw.html">Raw Table Data</a>
+  </div>
+
+  <footer style="margin-top:2em;font-size:small;color:#888">Powered by ESP32 & ThingSpeak | View source on GitHub</footer>
+
+<script>
+// ---- Channel Config ----
+const MAIN = {
+  id: '2995079',
+  key: 'KK28II1TGG2KSWDO',
+  fields: [
+    {name:'BME Temp (°C)', key:'field1'},
+    {name:'BME Humidity (%)', key:'field2'},
+    {name:'BME Pressure (hPa)', key:'field3'},
+    {name:'BME Altitude (m)', key:'field4'},
+    {name:'INA219 Bus Voltage (V)', key:'field5'},
+    {name:'INA219 Current (mA)', key:'field6'},
+    {name:'BH1750 Light (lx)', key:'field7'},
+  ]
+};
+const EXTRA = {
+  id: '2995090',
+  key: 'OYP628CRYJNOS0LC',
+  fields: [
+    {name:'DHT Temp (°C)', key:'field1'},
+    {name:'DHT Humidity (%)', key:'field2'},
+    {name:'LDR Raw', key:'field3'},
+    {name:'Rain Analog', key:'field4'},
+    {name:'Rain Digital', key:'field5'},
+    // dustDensity: if you add more fields, adjust here!
+  ]
+};
+
+async function fetchLatest(channel) {
+  // Fetch latest feed from ThingSpeak JSON API
+  const url = `https://api.thingspeak.com/channels/${channel.id}/feeds.json?api_key=${channel.key}&results=1`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  return data.feeds[0] || {};
+}
+
+async function showCurrentReadings() {
+  const main = await fetchLatest(MAIN);
+  const extra = await fetchLatest(EXTRA);
+  let html = '<div class="sensor-card"><h4>Main Channel</h4><ul>';
+  MAIN.fields.forEach(f => {
+    html += `<li><b>${f.name}:</b> ${main[f.key] ?? '--'}</li>`;
+  });
+  html += '</ul></div>';
+
+  html += '<div class="sensor-card"><h4>Extra Channel</h4><ul>';
+  EXTRA.fields.forEach(f => {
+    html += `<li><b>${f.name}:</b> ${extra[f.key] ?? '--'}</li>`;
+  });
+  html += '</ul></div>';
+
+  html += `<div><b>Last updated:</b> <span id='lastUpdate'>${main.created_at?.replace('T',' ').slice(0,19) ?? '--'}</span></div>`;
+  document.getElementById('currentReadings').innerHTML = html;
+}
+
+showCurrentReadings();
+setInterval(showCurrentReadings, 10000); // update every 10 sec
+</script>
+</body>
+</html>
