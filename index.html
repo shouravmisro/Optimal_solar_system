@@ -23,6 +23,21 @@
       letter-spacing: .02em;
       display: inline-block;
     }
+    nav { margin-top: 1em; }
+.navbtn {
+  display: inline-block; 
+  background: #3460b4;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5em 1.2em;
+  margin: 0 0.35em 0.6em 0;
+  border-radius: 6px;
+  font-size: 1.04em;
+  font-weight: 500;
+  transition: background 0.16s;
+}
+.navbtn:hover { background: #173263; color: #fff; }
+
     .nav a:hover { background: #173263; }
     .dashboard { max-width: 530px; margin: 2em auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0002; padding: 2em 2em 1.5em 2em; }
     .row { display: flex; justify-content: space-between; padding: 0.7em 0.2em; border-bottom: 1px solid #f0f0f0; }
@@ -43,10 +58,14 @@
   <header>
     <h1><i class="fa-solid fa-microchip"></i> ESP32 Sensor Dashboard</h1>
     <div class="muted">Last update: <span id="updated">-</span></div>
-    <div class="nav">
-      <a href="index.html"><i class="fa-solid fa-gauge"></i> Live Dashboard</a>
-      <a href="history.html"><i class="fa-solid fa-chart-line"></i> Historical Charts</a>
-      <a href="table.html"><i class="fa-solid fa-table"></i> Raw Data Table</a>
+  
+      <nav>
+  <a href="index.html" class="navbtn"><i class="fa fa-gauge"></i> Dashboard</a>
+  <a href="history.html" class="navbtn"><i class="fa fa-chart-line"></i> History</a>
+  <a href="table.html" class="navbtn"><i class="fa fa-table"></i> Raw Data</a>
+  <a href="control.html" class="navbtn"><i class="fa fa-toggle-on"></i> Control</a>
+</nav>
+
     </div>
   </header>
   <main>
