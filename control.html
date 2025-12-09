@@ -1,45 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ESP32 Motor/Pump Remote Control</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Solar IoT – Remote Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
   <style>
-    body { font-family: Arial, sans-serif; background: #eef2fa; text-align: center; }
-    .container { margin-top: 5vw; background: #fff; display: inline-block; padding: 2em 3em; border-radius: 12px; box-shadow: 0 4px 24px #0001; }
-    button { font-size: 1.2em; padding: 0.9em 2em; margin: 1em 1em 0 1em; border: none; border-radius: 6px; background: #3479ed; color: #fff; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #194c93; }
-    .status { margin-top: 1em; font-size: 1.1em; color: #234; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Poppins", sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
+      color: #e5e7eb;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(30, 64, 175, 0.7);
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header .title h1 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    header .title i {
+      color: #4ade80;
+    }
+    nav a {
+      color: #cbd5ff;
+      text-decoration: none;
+      margin-left: 1rem;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    nav a:hover,
+    nav a.active {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.1);
+    }
+    main {
+      padding: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 0.9rem;
+      padding: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      margin-bottom: 1rem;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+    h2 {
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.7rem;
+    }
+    button {
+      font-family: inherit;
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    button.primary {
+      background: #22c55e;
+      color: #022c22;
+    }
+    button.secondary {
+      background: #0ea5e9;
+      color: #e0f2fe;
+    }
+    button.danger {
+      background: #ef4444;
+      color: #fee2e2;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status-line {
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      padding: 0.3rem 0.35rem;
+      border-bottom: 1px solid rgba(55, 65, 81, 0.8);
+      text-align: left;
+      white-space: nowrap;
+    }
+    thead {
+      background: rgba(15, 23, 42, 0.9);
+    }
+    tbody tr:nth-child(even) { background: rgba(15, 23, 42, 0.7); }
+    tbody tr:nth-child(odd) { background: rgba(15, 23, 42, 0.45); }
+    .badge {
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.7rem;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>ESP32 Remote Control</h2>
-    <button onclick="sendMotor()">Toggle Motor Direction</button>
-    <button onclick="sendPump()">Run Pump (5 sec)</button>
-    <div class="status" id="status"></div>
+<header>
+  <div class="title">
+    <i class="fa-solid fa-sliders"></i>
+    <div>
+      <h1>Remote control (ThingSpeak)</h1>
+      <div class="small">Writes to field 8 on power channel (2995079)</div>
+    </div>
   </div>
-  <script>
-    const API_KEY = 'MC5F0AWE6SKDEVQ5'; // ThingSpeak Write API Key
-    function sendMotor() {
-      document.getElementById('status').textContent = "Sending motor toggle...";
-      fetch(`https://api.thingspeak.com/update?api_key=${API_KEY}&field1=1`)
-        .then(r => r.text()).then(data => {
-          document.getElementById('status').textContent = data === "0" ? "ThingSpeak: Rate limited! Try again in a few seconds." : "Motor toggle command sent!";
-        }).catch(() => {
-          document.getElementById('status').textContent = "Error sending command.";
-        });
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="table.html">Data table</a>
+    <a href="history.html">History graphs</a>
+    <a href="control.html" class="active">Remote control</a>
+  </nav>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Panel sharing control – Power/Clean node</h2>
+    <div class="small">
+      Channel <b>2995079</b>, <code>field8 = remoteCommand</code>:
+      0=ignore, 1=force OFF, 2=force ON, 3=AUTO.  
+      ESP32 code: <i>readThingSpeakCommand()</i> handles this.
+    </div>
+    <div class="btn-row">
+      <button id="btnAuto" class="secondary">
+        <i class="fa-solid fa-robot"></i> AUTO mode (3)
+      </button>
+      <button id="btnOn" class="primary">
+        <i class="fa-solid fa-circle-up"></i> Force sharing ON (2)
+      </button>
+      <button id="btnOff" class="danger">
+        <i class="fa-solid fa-circle-down"></i> Force sharing OFF (1)
+      </button>
+    </div>
+    <div class="status-line" id="commandStatus">
+      Ready. Click a button to send command.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Command history (field8 of channel 2995079)</h2>
+    <div class="small">
+      Shows last 20 entries of <code>field8</code> (remoteCommand) with timestamp.
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Command value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  const TS_BASE = "https://api.thingspeak.com";
+
+  // Power / clean channel
+  const POWER_CHANNEL_ID   = "2995079";
+  const POWER_READ_KEY     = "KK28II1TGG2KSWDO";
+  const POWER_WRITE_KEY    = "2RZPCMIQFV34K9BS";
+
+  function cmdMeaning(cmd) {
+    const c = Number(cmd);
+    if (c === 1) return "Force sharing OFF";
+    if (c === 2) return "Force sharing ON";
+    if (c === 3) return "AUTO mode";
+    if (c === 0) return "Ignore";
+    if (isNaN(c)) return "-";
+    return "Unknown (" + c + ")";
+  }
+
+  function formatTime(ts) {
+    const d = new Date(ts);
+    if (isNaN(d)) return ts;
+    return d.toLocaleString();
+  }
+
+  async function sendCommand(cmdValue) {
+    const statusEl = document.getElementById("commandStatus");
+    statusEl.textContent = "Sending command " + cmdValue + "…";
+
+    const url = `${TS_BASE}/update?api_key=${POWER_WRITE_KEY}&field8=${encodeURIComponent(cmdValue)}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      if (text.trim() === "0") {
+        statusEl.textContent = "Command sent, but ThingSpeak returned 0 (rate limit or no update).";
+      } else {
+        statusEl.textContent = `Command ${cmdValue} sent (entry ID ${text.trim()}).`;
+      }
+      // refresh history afterwards
+      loadHistory();
+    } catch (e) {
+      console.error(e);
+      statusEl.textContent = "Error sending command: " + e.message;
     }
-    function sendPump() {
-      document.getElementById('status').textContent = "Sending pump trigger...";
-      fetch(`https://api.thingspeak.com/update?api_key=${API_KEY}&field2=1`)
-        .then(r => r.text()).then(data => {
-          document.getElementById('status').textContent = data === "0" ? "ThingSpeak: Rate limited! Try again in a few seconds." : "Pump command sent!";
-        }).catch(() => {
-          document.getElementById('status').textContent = "Error sending command.";
-        });
+  }
+
+  async function loadHistory() {
+    const tbody = document.querySelector("#historyTable tbody");
+    tbody.innerHTML = "<tr><td colspan='3'>Loading…</td></tr>";
+
+    const url = `${TS_BASE}/channels/${POWER_CHANNEL_ID}/fields/8.json?api_key=${POWER_READ_KEY}&results=20`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      const feeds = (data && data.feeds) ? data.feeds : [];
+
+      tbody.innerHTML = "";
+      feeds.reverse().forEach(feed => {
+        const cmd = feed.field8;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formatTime(feed.created_at)}</td>
+          <td>${cmd ?? ""}</td>
+          <td>${cmdMeaning(cmd)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (feeds.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='3'>No commands yet.</td></tr>";
+      }
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = "<tr><td colspan='3'>Error loading history: " + e.message + "</td></tr>";
     }
-  </script>
+  }
+
+  document.getElementById("btnAuto").addEventListener("click", () => sendCommand(3));
+  document.getElementById("btnOn").addEventListener("click", () => sendCommand(2));
+  document.getElementById("btnOff").addEventListener("click", () => sendCommand(1));
+
+  loadHistory();
+  setInterval(loadHistory, 30000);
+</script>
 </body>
 </html>
-
