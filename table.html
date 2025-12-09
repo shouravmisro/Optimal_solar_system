@@ -1,95 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ESP32 Sensor Data Table</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Solar IoT – Data Table</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; color: #222; margin: 0;}
-    header { background: #173263; color: #fff; padding: 1em 0; text-align: center; }
-    h1 { margin: 0 0 0.2em 0; font-size: 2em; }
-    .nav { text-align: center; margin-top: 1em; margin-bottom: 2em; }
-    .nav a { text-decoration: none; background: #3460b4; color: #fff; padding: 0.5em 1.1em; border-radius: 5px; margin: 0 0.5em; }
-    .nav a:hover { background: #173263; }
-    section { max-width: 99vw; margin: auto; padding: 1em; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 2em; background: #fff; box-shadow: 0 2px 8px #0001;}
-    th, td { border: 1px solid #eee; padding: 0.43em 0.7em; font-size: 0.99em;}
-    th { background: #173263; color: #fff; }
-    tr:nth-child(even) { background: #f2f7fa;}
-    .subtitle { font-weight: bold; color: #173263; margin: 1.2em 0 0.5em 0;}
-    @media (max-width: 900px) { table { font-size: 0.85em; } }
-    @media (max-width: 650px) { th, td { font-size: 0.78em; padding: 0.25em 0.3em;} }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Poppins", sans-serif;
+      min-height: 100vh;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    header .title h1 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    header .title i {
+      color: #38bdf8;
+    }
+    nav a {
+      color: #cbd5ff;
+      text-decoration: none;
+      margin-left: 1rem;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    nav a:hover,
+    nav a.active {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+    }
+    main {
+      padding: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h2 {
+      font-size: 0.95rem;
+      margin: 1rem 0 0.4rem;
+      font-weight: 600;
+    }
+    .card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 0.8rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      margin-bottom: 1rem;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+    thead {
+      background: rgba(15, 23, 42, 0.9);
+    }
+    th, td {
+      padding: 0.35rem 0.4rem;
+      border-bottom: 1px solid rgba(55, 65, 81, 0.7);
+      text-align: left;
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.65);
+    }
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.3);
+    }
+    .small {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>ESP32 Sensor Raw Data Table</h1>
-    <div class="nav">
-      <a href="index.html">Live Dashboard</a>
-      <a href="history.html">Historical Charts</a>
-      <a href="table.html">Raw Data Table</a>
+<header>
+  <div class="title">
+    <i class="fa-solid fa-table"></i>
+    <div>
+      <h1>Solar data table</h1>
+      <div class="small">Last 20 entries from both ThingSpeak channels</div>
     </div>
-  </header>
-  <section>
-    <div class="subtitle">Main Channel (BME280, INA219, Light): Last 50 Entries</div>
-    <div id="main-table">Loading...</div>
-    <div class="subtitle">Extra Channel (DHT11, LDR, Rain, Dust): Last 50 Entries</div>
-    <div id="extra-table">Loading...</div>
-  </section>
-  <script>
-    const MAIN_CHANNEL_ID = "2995079";
-    const MAIN_READ_API = "KK28II1TGG2KSWDO";
-    const EXTRA_CHANNEL_ID = "2995090";
-    const EXTRA_READ_API = "OYP628CRYJNOS0LC";
-    const LIMIT = 50;
+  </div>
+  <nav>
+    <a href="index.html">Overview</a>
+    <a href="table.html" class="active">Data table</a>
+    <a href="history.html">History graphs</a>
+    <a href="control.html">Remote control</a>
+  </nav>
+</header>
 
-    // Table for main channel (fields 1–7)
-    function buildMainTable(feeds) {
-      let html = `<table><thead>
-        <tr>
-          <th>Time</th>
-          <th>Temp (°C)</th><th>Hum (%)</th><th>Press (hPa)</th><th>Alt (m)</th>
-          <th>Bus V (V)</th><th>Current (mA)</th><th>Light (lx)</th>
-        </tr></thead><tbody>`;
-      for(let f of feeds) {
-        html += `<tr>
-          <td>${new Date(f.created_at).toLocaleString()}</td>
-          <td>${f.field1||""}</td><td>${f.field2||""}</td><td>${f.field3||""}</td><td>${f.field4||""}</td>
-          <td>${f.field5||""}</td><td>${f.field6||""}</td><td>${f.field7||""}</td>
-        </tr>`;
-      }
-      html += `</tbody></table>`;
-      return html;
-    }
-    // Table for extra channel (fields 1–6)
-    function buildExtraTable(feeds) {
-      let html = `<table><thead>
-        <tr>
-          <th>Time</th>
-          <th>DHT Temp (°C)</th><th>DHT Hum (%)</th><th>LDR</th>
-          <th>Rain (Analog)</th><th>Rain (Digital)</th><th>Dust (ug/m³)</th>
-        </tr></thead><tbody>`;
-      for(let f of feeds) {
-        html += `<tr>
-          <td>${new Date(f.created_at).toLocaleString()}</td>
-          <td>${f.field1||""}</td><td>${f.field2||""}</td><td>${f.field3||""}</td>
-          <td>${f.field4||""}</td><td>${f.field5||""}</td><td>${f.field6||""}</td>
-        </tr>`;
-      }
-      html += `</tbody></table>`;
-      return html;
+<main>
+  <div class="card">
+    <h2>Power / sharing node (Channel 2995079)</h2>
+    <div class="small">
+      field1=V12, field2=I12, field3=V6, field4=I6, field5=sharing, field6=charging12, field7=alarm, field8=remoteCommand
+    </div>
+    <div style="overflow-x:auto; margin-top:0.5rem;">
+      <table id="powerTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>V12</th>
+            <th>I12</th>
+            <th>V6</th>
+            <th>I6</th>
+            <th>Share</th>
+            <th>Chg12</th>
+            <th>Alarm</th>
+            <th>Cmd</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Weather node (Channel 2995090)</h2>
+    <div class="small">
+      field1=lux, field2=temp, field3=press, field4=rainAO, field5=dustAdc, field6=rainFlag, field7=dustHigh, field8=cleanFlag
+    </div>
+    <div style="overflow-x:auto; margin-top:0.5rem;">
+      <table id="weatherTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Lux</th>
+            <th>Temp</th>
+            <th>Press</th>
+            <th>RainAO</th>
+            <th>Dust</th>
+            <th>rainFlag</th>
+            <th>dustHigh</th>
+            <th>cleanFlag</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+  const TS_BASE = "https://api.thingspeak.com";
+
+  const POWER_CHANNEL_ID = "2995079";
+  const POWER_READ_KEY   = "KK28II1TGG2KSWDO";
+
+  const WEATHER_CHANNEL_ID = "2995090";
+  const WEATHER_READ_KEY   = "OYP628CRYJNOS0LC";
+
+  async function fetchFeeds(channelId, readKey, results = 20) {
+    const url = `${TS_BASE}/channels/${channelId}/feeds.json?api_key=${readKey}&results=${results}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    return data.feeds || [];
+  }
+
+  function formatTime(ts) {
+    const d = new Date(ts);
+    if (isNaN(d)) return ts;
+    return d.toLocaleString();
+  }
+
+  function boolStr(v) { return Number(v) ? "1" : "0"; }
+
+  async function loadTables() {
+    // POWER
+    try {
+      const pFeeds = await fetchFeeds(POWER_CHANNEL_ID, POWER_READ_KEY, 20);
+      const tbody = document.querySelector("#powerTable tbody");
+      tbody.innerHTML = "";
+      pFeeds.reverse().forEach(feed => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formatTime(feed.created_at)}</td>
+          <td>${feed.field1 ?? ""}</td>
+          <td>${feed.field2 ?? ""}</td>
+          <td>${feed.field3 ?? ""}</td>
+          <td>${feed.field4 ?? ""}</td>
+          <td>${boolStr(feed.field5)}</td>
+          <td>${boolStr(feed.field6)}</td>
+          <td>${feed.field7 ?? ""}</td>
+          <td>${feed.field8 ?? ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error("Power table error:", e);
     }
 
-    function fetchThingSpeak(channel, api, cb) {
-      fetch(`https://api.thingspeak.com/channels/${channel}/feeds.json?api_key=${api}&results=${LIMIT}`)
-        .then(resp => resp.json()).then(json => cb(json.feeds));
+    // WEATHER
+    try {
+      const wFeeds = await fetchFeeds(WEATHER_CHANNEL_ID, WEATHER_READ_KEY, 20);
+      const tbodyW = document.querySelector("#weatherTable tbody");
+      tbodyW.innerHTML = "";
+      wFeeds.reverse().forEach(feed => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${formatTime(feed.created_at)}</td>
+          <td>${feed.field1 ?? ""}</td>
+          <td>${feed.field2 ?? ""}</td>
+          <td>${feed.field3 ?? ""}</td>
+          <td>${feed.field4 ?? ""}</td>
+          <td>${feed.field5 ?? ""}</td>
+          <td>${boolStr(feed.field6)}</td>
+          <td>${boolStr(feed.field7)}</td>
+          <td>${boolStr(feed.field8)}</td>
+        `;
+        tbodyW.appendChild(tr);
+      });
+    } catch (e) {
+      console.error("Weather table error:", e);
     }
-    fetchThingSpeak(MAIN_CHANNEL_ID, MAIN_READ_API, feeds => {
-      document.getElementById('main-table').innerHTML = buildMainTable(feeds);
-    });
-    fetchThingSpeak(EXTRA_CHANNEL_ID, EXTRA_READ_API, feeds => {
-      document.getElementById('extra-table').innerHTML = buildExtraTable(feeds);
-    });
-  </script>
+  }
+
+  loadTables();
+  setInterval(loadTables, 30000);
+</script>
 </body>
 </html>
